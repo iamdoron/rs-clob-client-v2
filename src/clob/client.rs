@@ -2159,10 +2159,18 @@ impl<K: Kind> Client<Authenticated<K>> {
             )
             .json(&serde_json::json!({ "key": key }))
             .build()?;
+        let method = request.method().clone();
+        let path = request.url().path().to_owned();
         let headers = self.create_headers(&request).await?;
 
         *request.headers_mut() = headers;
-        self.inner.client.execute(request).await?;
+        let response = self.inner.client.execute(request).await?;
+        let status = response.status();
+
+        if !status.is_success() {
+            let message = response.text().await.unwrap_or_default();
+            return Err(Error::status(status, method, path, message));
+        }
 
         Ok(())
     }
