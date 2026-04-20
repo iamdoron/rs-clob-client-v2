@@ -25,7 +25,8 @@ pub fn calculate_market_price(
 ) -> Option<Decimal> {
     let positions: &[OrderSummary] = match side {
         Side::Buy => &orderbook.asks,
-        Side::Sell | Side::Unknown => &orderbook.bids,
+        Side::Sell => &orderbook.bids,
+        Side::Unknown => return None,
     };
 
     if positions.is_empty() {
@@ -36,7 +37,8 @@ pub fn calculate_market_price(
     for p in positions.iter().rev() {
         match side {
             Side::Buy => total += p.size * p.price,
-            Side::Sell | Side::Unknown => total += p.size,
+            Side::Sell => total += p.size,
+            Side::Unknown => return None,
         }
         if total >= amount {
             return Some(p.price);
@@ -238,6 +240,18 @@ mod tests {
         let ob = make_orderbook(vec![], vec![]);
         assert_eq!(
             calculate_market_price(&ob, Side::Buy, dec!(100), &OrderType::FOK),
+            None,
+        );
+    }
+
+    #[test]
+    fn calculate_market_price_unknown_side_returns_none() {
+        let ob = make_orderbook(
+            vec![order(dec!(0.49), dec!(100))],
+            vec![order(dec!(0.51), dec!(100))],
+        );
+        assert_eq!(
+            calculate_market_price(&ob, Side::Unknown, dec!(10), &OrderType::FOK),
             None,
         );
     }

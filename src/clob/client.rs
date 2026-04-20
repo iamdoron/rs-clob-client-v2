@@ -1260,6 +1260,10 @@ impl<S: State> Client<S> {
         amount: Decimal,
         order_type: OrderType,
     ) -> Result<Decimal> {
+        if matches!(side, Side::Unknown) {
+            return Err(Error::validation(format!("Invalid side: {side}")));
+        }
+
         let book = self
             .order_book(&OrderBookSummaryRequest {
                 token_id,
