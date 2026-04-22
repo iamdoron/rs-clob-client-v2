@@ -621,9 +621,13 @@ fn to_fixed_u128(d: Decimal) -> u128 {
         .expect("The `build` call in `OrderBuilder<S, OrderKind, K>` ensures that only positive values are being multiplied/divided")
 }
 
-/// Mask the salt to be <= 2^53 - 1, as the backend parses as an IEEE 754.
-fn to_ieee_754_int(salt: u64) -> u64 {
-    salt & ((1 << 53) - 1)
+/// `Number.MAX_SAFE_INTEGER` (2^53 − 1). The CLOB backend deserializes the order's
+/// uniqueness nonce as a JSON number; values above this bound lose precision in
+/// JavaScript. Not a cryptographic constant — the nonce is not security-sensitive.
+const JS_SAFE_INTEGER_MAX: u64 = (1 << 53) - 1;
+
+fn to_ieee_754_int(value: u64) -> u64 {
+    value & JS_SAFE_INTEGER_MAX
 }
 
 #[must_use]

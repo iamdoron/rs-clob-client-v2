@@ -4546,8 +4546,7 @@ mod v1 {
         const V1_NEG_RISK_EXCHANGE_POLYGON: Address =
             address!("0xC5d563A36AE78145C45a50134d48A1215220f80a");
         /// The V2 exchange contract on Polygon mainnet.
-        const V2_EXCHANGE_POLYGON: Address =
-            address!("0xE111180000d2663C0091e4f400237545B87B996B");
+        const V2_EXCHANGE_POLYGON: Address = address!("0xE111180000d2663C0091e4f400237545B87B996B");
         /// The V2 neg-risk exchange contract on Polygon mainnet.
         const V2_NEG_RISK_EXCHANGE_POLYGON: Address =
             address!("0xe2222d279d744050d28e00520010520000310F59");
@@ -4577,7 +4576,8 @@ mod v1 {
                 when.method(httpmock::Method::GET)
                     .path("/fee-rate")
                     .query_param("token_id", token_id.to_string());
-                then.status(StatusCode::OK).json_body(json!({ "base_fee": 0 }));
+                then.status(StatusCode::OK)
+                    .json_body(json!({ "base_fee": 0 }));
             });
         }
 
@@ -4646,9 +4646,7 @@ mod v1 {
                 verifying_contract: Some(V1_NEG_RISK_EXCHANGE_POLYGON),
                 ..Eip712Domain::default()
             };
-            let expected_sig = signer
-                .sign_hash(&v1.eip712_signing_hash(&expected))
-                .await?;
+            let expected_sig = signer.sign_hash(&v1.eip712_signing_hash(&expected)).await?;
 
             let signed = client.sign(&signer, signable).await?;
             assert_eq!(signed.signature, expected_sig);
@@ -4699,9 +4697,7 @@ mod v1 {
                 verifying_contract: Some(V2_NEG_RISK_EXCHANGE_POLYGON),
                 ..Eip712Domain::default()
             };
-            let expected_sig = signer
-                .sign_hash(&v2.eip712_signing_hash(&expected))
-                .await?;
+            let expected_sig = signer.sign_hash(&v2.eip712_signing_hash(&expected)).await?;
 
             let signed = client.sign(&signer, signable).await?;
             assert_eq!(signed.signature, expected_sig);
