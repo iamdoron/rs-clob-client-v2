@@ -2145,6 +2145,47 @@ mod authenticated {
         Ok(())
     }
 
+    #[test]
+    fn trade_response_should_deserialize_empty_fee_rate_bps_as_zero() -> anyhow::Result<()> {
+        let trade: TradeResponse = serde_json::from_value(json!({
+            "id": "1",
+            "taker_order_id": "taker_123",
+            "market": "0x000000000000000000000000000000000000000000000000000000006d61726b",
+            "asset_id": token_1(),
+            "side": "BUY",
+            "size": "12.5",
+            "fee_rate_bps": "",
+            "price": "0.42",
+            "status": "MATCHED",
+            "match_time": "1705322096",
+            "last_update": "1705322130",
+            "outcome": "YES",
+            "bucket_index": 2,
+            "owner": "ffffffff-ffff-ffff-ffff-ffffffffffff",
+            "maker_address": "0x2222222222222222222222222222222222222222",
+            "maker_orders": [
+                {
+                    "order_id": "maker_001",
+                    "owner": "ffffffff-ffff-ffff-ffff-ffffffffffff",
+                    "maker_address": "0x4444444444444444444444444444444444444444",
+                    "matched_amount": "5.0",
+                    "price": "0.42",
+                    "fee_rate_bps": "",
+                    "asset_id": token_1(),
+                    "outcome": "YES",
+                    "side": "SELL"
+                }
+            ],
+            "transaction_hash": "0xabcdefabcdefabcdefabcdefabcdefabcdefabcdefabcdefabcdefabcdefabcd",
+            "trader_side": "TAKER"
+        }))?;
+
+        assert_eq!(trade.fee_rate_bps, Decimal::ZERO);
+        assert_eq!(trade.maker_orders[0].fee_rate_bps, Decimal::ZERO);
+
+        Ok(())
+    }
+
     #[tokio::test]
     async fn notifications_should_succeed() -> anyhow::Result<()> {
         let server = MockServer::start();
