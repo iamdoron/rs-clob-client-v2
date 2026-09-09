@@ -1,0 +1,16 @@
+[package]
+name = "sdk-tls-consumer"
+version = "0.0.0"
+edition = "2024"
+publish = false
+
+[workspace]
+
+[features]
+default = ["sdk-default"]
+sdk-default = ["sdk/default"]
+ring = ["sdk/rustls-no-provider", "dep:rustls"]
+
+[dependencies]
+rustls = { version = "0.23", default-features = false, features = ["ring", "std", "tls12"], optional = true }
+sdk = { package = "polymarket_client_sdk_v2", path = "../..", default-features = false, features = ["clob", "data", "gamma", "bridge"] }

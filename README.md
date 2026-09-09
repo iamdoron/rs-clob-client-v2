@@ -78,6 +78,8 @@ The crate is modular with optional features for different Polymarket APIs:
 | `rfq`        | RFQ API (within CLOB) for submitting and querying quotes                                                                                       |
 | `heartbeats` | Clob feature that automatically sends heartbeat messages to the Polymarket server, if the client disconnects all open orders will be cancelled |
 | `ctf`        | CTF API client to perform split/merge/redeem on binary and neg risk markets
+| `rustls` | Default TLS backend, using Reqwest's AWS-LC provider |
+| `rustls-no-provider` | Rustls TLS with an application-installed crypto provider |
 
 Enable features in your `Cargo.toml`:
 
@@ -85,6 +87,36 @@ Enable features in your `Cargo.toml`:
 [dependencies]
 polymarket_client_sdk_v2 = { version = "0.6", features = ["ws", "data"] }
 ```
+
+### Choosing a TLS crypto provider
+
+Default features retain the existing Rustls/AWS-LC backend. HTTP/2, charset
+decoding and system proxy support remain enabled independently of the backend.
+Applications that disable default features must now explicitly select `rustls`
+to retain that backend, or `rustls-no-provider` to supply their own provider.
+
+For example, an application already using `ring` can avoid compiling AWS-LC:
+
+```toml
+polymarket_client_sdk_v2 = { version = "0.6", default-features = false, features = ["clob", "ws", "rustls-no-provider"] }
+rustls = { version = "0.23", default-features = false, features = ["ring", "std", "tls12"] }
+```
+
+Install the provider before constructing SDK, Reqwest or Alloy HTTP clients:
+
+```rust
+rustls::crypto::ring::default_provider()
+    .install_default()
+    .expect("install the application's TLS provider once at startup");
+```
+
+The SDK does not overwrite an application's process-wide crypto provider. With
+`rustls-no-provider`, failing to install one before creating a Reqwest client can
+panic. Cargo features are additive: another dependency enabling Reqwest's
+`rustls`/`default-tls` or Alloy's `reqwest-rustls-tls`/`reqwest-default-tls` will
+still bring in AWS-LC. Configure every such dependency consistently and verify
+the resolved graph with `cargo tree`. This choice does not disable certificate
+verification or change the SDK's certificate-root configuration.
 
 ## Re-exported Types
 
