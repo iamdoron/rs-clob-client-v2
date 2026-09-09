@@ -102,9 +102,11 @@ polymarket_client_sdk_v2 = { version = "0.6", default-features = false, features
 rustls = { version = "0.23", default-features = false, features = ["ring", "std", "tls12"] }
 ```
 
-Install the provider before constructing SDK, Reqwest or Alloy HTTP clients:
+Install the provider before constructing SDK, Reqwest or Alloy HTTP clients. This
+application snippet requires the additional `rustls` dependency shown above; it
+is exercised by `tests/tls-consumer`, not as an SDK-only doctest:
 
-```rust
+```rust,ignore
 rustls::crypto::ring::default_provider()
     .install_default()
     .expect("install the application's TLS provider once at startup");
