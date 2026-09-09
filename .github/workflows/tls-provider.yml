@@ -1,0 +1,50 @@
+name: TLS provider consumers
+
+on:
+  pull_request:
+    paths:
+      - Cargo.toml
+      - Cargo.lock
+      - src/**
+      - tests/tls-consumer/**
+      - .github/workflows/tls-provider.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  consumer:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    strategy:
+      fail-fast: false
+      matrix:
+        provider: [sdk-default, ring]
+    env:
+      CARGO_INCREMENTAL: '0'
+      CARGO_PROFILE_DEV_DEBUG: line-tables-only
+      RUSTC_WRAPPER: ''
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+      - name: Install fixed test compiler
+        run: rustup toolchain install 1.98.1 --profile minimal
+      - name: Check an external consumer's feature graph and client constructors
+        env:
+          PROVIDER: ${{ matrix.provider }}
+        run: |
+          cp Cargo.lock tests/tls-consumer/Cargo.lock
+          cargo +1.98.1 tree --manifest-path tests/tls-consumer/Cargo.toml \
+            --no-default-features --features "$PROVIDER" > tls-tree.txt
+          if [[ "$PROVIDER" == ring ]]; then
+            if grep -Eq 'aws-lc-(rs|sys) v' tls-tree.txt; then
+              echo 'Unexpected AWS-LC dependency in the ring-only consumer' >&2
+              exit 1
+            fi
+          else
+            grep -q 'aws-lc-rs v' tls-tree.txt
+          fi
+          cargo +1.98.1 run --manifest-path tests/tls-consumer/Cargo.toml \
+            --locked --no-default-features --features "$PROVIDER"

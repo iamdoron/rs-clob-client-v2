@@ -222,7 +222,8 @@ pub mod payloads {
                     "order_id": "0xff354cd7ca7539dfa9c28d90943ab5779a4eac34b9b37a757d7b32bdfb11790b",
                     "outcome": "YES",
                     "owner": "9180014b-33c8-9240-a14b-bdca11c0a465",
-                    "price": "0.57"
+                    "price": "0.57",
+                    "side": "SELL"
                 }
             ],
             "market": MARKET_STR,
@@ -699,6 +700,16 @@ mod user_channel {
 
     fn test_credentials() -> Credentials {
         Credentials::new(API_KEY, SECRET.to_owned(), PASSPHRASE.to_owned())
+    }
+
+    #[test]
+    fn trade_fixture_deserializes() {
+        let message: WsMessage = serde_json::from_value(payloads::trade())
+            .expect("trade fixture must deserialize before testing WebSocket delivery");
+        let WsMessage::Trade(trade) = message else {
+            panic!("Expected trade fixture to deserialize as a trade");
+        };
+        assert_eq!(trade.maker_orders[0].side, Side::Sell);
     }
 
     #[tokio::test]
